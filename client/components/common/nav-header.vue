@@ -173,16 +173,15 @@
                 v-list-item-content
                   v-list-item-title {{name}}
                   v-list-item-subtitle {{email}}
-              v-list-item(href='/w', disabled)
-                v-list-item-action: v-icon(color='blue') mdi-view-compact-outline
+              //- v-list-item(href='/w', disabled)
+              //-   v-list-item-action: v-icon(color='blue') mdi-view-compact-outline
+              //-   v-list-item-content
+              //-     v-list-item-title {{$t('common:header.myWiki')}}
+              //-     v-list-item-subtitle.overline Coming soon
+              v-list-item(href='/p')
+                v-list-item-action: v-icon(color='primary') mdi-account-badge
                 v-list-item-content
-                  v-list-item-title {{$t('common:header.myWiki')}}
-                  v-list-item-subtitle.overline Coming soon
-              v-list-item(href='/p', disabled)
-                v-list-item-action: v-icon(color='blue') mdi-face-profile
-                v-list-item-content
-                  v-list-item-title {{$t('common:header.profile')}}
-                  v-list-item-subtitle.overline Coming soon
+                  v-list-item-title(:class='$vuetify.theme.dark ? `blue--text text--lighten-1` : `primary--text`') {{$t('common:header.profile')}}
               v-list-item(href='/a', v-if='isAuthenticated && isAdmin')
                 v-list-item-action.btn-animate-rotate: v-icon(:color='$vuetify.theme.dark ? `blue-grey lighten-3` : `blue-grey`') mdi-settings
                 v-list-item-title(:class='$vuetify.theme.dark ? `blue-grey--text text--lighten-3` : `blue-grey--text`') {{$t('common:header.admin')}}
