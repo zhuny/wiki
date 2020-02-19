@@ -220,6 +220,38 @@ module.exports = {
       } catch (err) {
         return graphHelper.generateError(err)
       }
+    },
+    /**
+     * Set HTTPS Redirection State
+     */
+    async setHTTPSRedirection (obj, args, context) {
+      _.set(WIKI.config, 'server.sslRedir', args.enabled)
+      await WIKI.configSvc.saveToDb(['server'])
+      return {
+        responseResult: graphHelper.generateSuccess('HTTP Redirection state set successfully.')
+      }
+    },
+    /**
+     * Renew SSL Certificate
+     */
+    async renewHTTPSCertificate (obj, args, context) {
+      try {
+        if (!WIKI.config.ssl.enabled) {
+          throw new WIKI.Error.SystemSSLDisabled()
+        } else if (WIKI.config.ssl.provider !== `letsencrypt`) {
+          throw new WIKI.Error.SystemSSLRenewInvalidProvider()
+        } else if (!WIKI.servers.le) {
+          throw new WIKI.Error.SystemSSLLEUnavailable()
+        } else {
+          await WIKI.servers.le.requestCertificate()
+          await WIKI.servers.restartServer('https')
+          return {
+            responseResult: graphHelper.generateSuccess('SSL Certificate renewed successfully.')
+          }
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
     }
   },
   SystemInfo: {
@@ -266,6 +298,15 @@ module.exports = {
     hostname () {
       return os.hostname()
     },
+    httpPort () {
+      return WIKI.servers.servers.http ? _.get(WIKI.servers.servers.http.address(), 'port', 0) : 0
+    },
+    httpRedirection () {
+      return _.get(WIKI.config, 'server.sslRedir', false)
+    },
+    httpsPort () {
+      return WIKI.servers.servers.https ? _.get(WIKI.servers.servers.https.address(), 'port', 0) : 0
+    },
     latestVersion () {
       return WIKI.system.updates.version
     },
@@ -293,6 +334,21 @@ module.exports = {
     ramTotal () {
       return filesize(os.totalmem())
     },
+    sslDomain () {
+      return WIKI.config.ssl.enabled && WIKI.config.ssl.provider === `letsencrypt` ? WIKI.config.ssl.domain : null
+    },
+    sslExpirationDate () {
+      return WIKI.config.ssl.enabled && WIKI.config.ssl.provider === `letsencrypt` ? _.get(WIKI.config.letsencrypt, 'payload.expires', null) : null
+    },
+    sslProvider () {
+      return WIKI.config.ssl.enabled ? WIKI.config.ssl.provider : null
+    },
+    sslStatus () {
+      return 'OK'
+    },
+    sslSubscriberEmail () {
+      return WIKI.config.ssl.enabled && WIKI.config.ssl.provider === `letsencrypt` ? WIKI.config.ssl.subscriberEmail : null
+    },
     telemetry () {
       return WIKI.telemetry.enabled
     },
@@ -306,16 +362,20 @@ module.exports = {
       return process.cwd()
     },
     async groupsTotal () {
-      const total = await WIKI.models.groups.query().count('* as total').first().pluck('total')
-      return _.toSafeInteger(total)
+      const total = await WIKI.models.groups.query().count('* as total').first()
+      return _.toSafeInteger(total.total)
     },
     async pagesTotal () {
-      const total = await WIKI.models.pages.query().count('* as total').first().pluck('total')
-      return _.toSafeInteger(total)
+      const total = await WIKI.models.pages.query().count('* as total').first()
+      return _.toSafeInteger(total.total)
     },
     async usersTotal () {
-      const total = await WIKI.models.users.query().count('* as total').first().pluck('total')
-      return _.toSafeInteger(total)
+      const total = await WIKI.models.users.query().count('* as total').first()
+      return _.toSafeInteger(total.total)
+    },
+    async tagsTotal () {
+      const total = await WIKI.models.tags.query().count('* as total').first()
+      return _.toSafeInteger(total.total)
     }
   }
 }

@@ -41,11 +41,21 @@ type PageQuery {
 
   tags: [PageTag]! @auth(requires: ["manage:system", "read:pages"])
 
+  searchTags(
+    query: String!
+  ): [String]! @auth(requires: ["manage:system", "read:pages"])
+
   tree(
-    parent: Int!
+    path: String
+    parent: Int
     mode: PageTreeMode!
     locale: String!
+    includeParents: Boolean
   ): [PageTreeItem] @auth(requires: ["manage:system", "read:pages"])
+
+  links(
+    locale: String!
+  ): [PageLinkItem] @auth(requires: ["manage:system", "read:pages"])
 }
 
 # -----------------------------------------------
@@ -92,6 +102,16 @@ type PageMutation {
     id: Int!
   ): DefaultResponse @auth(requires: ["delete:pages", "manage:system"])
 
+  deleteTag(
+    id: Int!
+  ): DefaultResponse @auth(requires: ["manage:system"])
+
+  updateTag(
+    id: Int!
+    tag: String!
+    title: String!
+  ): DefaultResponse @auth(requires: ["manage:system"])
+
   flushCache: DefaultResponse @auth(requires: ["manage:system"])
 
   migrateToLocale(
@@ -100,6 +120,10 @@ type PageMutation {
   ): PageMigrationResponse @auth(requires: ["manage:system"])
 
   rebuildTree: DefaultResponse @auth(requires: ["manage:system"])
+
+  render(
+    id: Int!
+  ): DefaultResponse @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------
@@ -207,6 +231,13 @@ type PageTreeItem {
   parent: Int
   pageId: Int
   locale: String!
+}
+
+type PageLinkItem {
+  id: Int!
+  path: String!
+  title: String!
+  links: [String]!
 }
 
 enum PageOrderBy {

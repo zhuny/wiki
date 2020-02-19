@@ -52,56 +52,23 @@
                     :hint='$t(`admin:theme.darkModeHint`)'
                     )
 
-              //- v-card.mt-3.animated.fadeInUp.wait-p1s
-              //-   v-toolbar(color='primary', dark, dense, flat)
-              //-     v-toolbar-title.subtitle-1 {{$t(`admin:theme.options`)}}
-              //-     v-spacer
-              //-     v-chip(label, color='white', small).primary--text coming soon
-              //-   v-card-text
-              //-     v-select(
-              //-       :items='iconsets'
-              //-       outlined
-              //-       prepend-icon='mdi-border-vertical'
-              //-       v-model='config.iconset'
-              //-       label='Table of Contents Position'
-              //-       persistent-hint
-              //-       hint='Select whether the table of contents is shown on the left, right or not at all.'
-              //-       )
-
-              v-card.mt-3.animated.fadeInUp.wait-p2s
+              v-card.mt-3.animated.fadeInUp.wait-p1s
                 v-toolbar(color='primary', dark, dense, flat)
-                  v-toolbar-title.subtitle-1 {{$t(`admin:theme.codeInjection`)}}
+                  v-toolbar-title.subtitle-1 {{$t(`admin:theme.options`)}}
+                  v-spacer
+                  v-chip(label, color='white', small).primary--text coming soon
                 v-card-text
-                  v-textarea(
-                    v-model='config.injectCSS'
-                    :label='$t(`admin:theme.cssOverride`)'
+                  v-select(
+                    :items='[]'
                     outlined
-                    color='primary'
+                    prepend-icon='mdi-border-vertical'
+                    v-model='config.iconset'
+                    label='Table of Contents Position'
                     persistent-hint
-                    :hint='$t(`admin:theme.cssOverrideHint`)'
-                    auto-grow
+                    hint='Select whether the table of contents is shown on the left, right or not at all.'
+                    disabled
                     )
-                  i18next.caption.pl-2.ml-1(path='admin:theme.cssOverrideWarning', tag='div')
-                    strong.red--text(place='caution') {{$t('admin:theme.cssOverrideWarningCaution')}}
-                    code(place='cssClass') .contents
-                  v-textarea.mt-3(
-                    v-model='config.injectHead'
-                    :label='$t(`admin:theme.headHtmlInjection`)'
-                    outlined
-                    color='primary'
-                    persistent-hint
-                    :hint='$t(`admin:theme.headHtmlInjectionHint`)'
-                    auto-grow
-                    )
-                  v-textarea.mt-2(
-                    v-model='config.injectBody'
-                    :label='$t(`admin:theme.bodyHtmlInjection`)'
-                    outlined
-                    color='primary'
-                    persistent-hint
-                    :hint='$t(`admin:theme.bodyHtmlInjectionHint`)'
-                    auto-grow
-                    )
+
             v-flex(lg6 xs12)
               v-card.animated.fadeInUp.wait-p2s
                 v-toolbar(color='teal', dark, dense, flat)
@@ -128,6 +95,41 @@
                         v-icon.green--text mdi-check-bold
                       v-btn(v-else, icon)
                         v-icon.grey--text mdi-cloud-download
+
+              v-card.mt-3.animated.fadeInUp.wait-p2s
+                v-toolbar(color='primary', dark, dense, flat)
+                  v-toolbar-title.subtitle-1 {{$t(`admin:theme.codeInjection`)}}
+                v-card-text
+                  v-textarea.is-monospaced(
+                    v-model='config.injectCSS'
+                    :label='$t(`admin:theme.cssOverride`)'
+                    outlined
+                    color='primary'
+                    persistent-hint
+                    :hint='$t(`admin:theme.cssOverrideHint`)'
+                    auto-grow
+                    )
+                  i18next.caption.pl-2.ml-1(path='admin:theme.cssOverrideWarning', tag='div')
+                    strong.red--text(place='caution') {{$t('admin:theme.cssOverrideWarningCaution')}}
+                    code(place='cssClass') .contents
+                  v-textarea.is-monospaced.mt-3(
+                    v-model='config.injectHead'
+                    :label='$t(`admin:theme.headHtmlInjection`)'
+                    outlined
+                    color='primary'
+                    persistent-hint
+                    :hint='$t(`admin:theme.headHtmlInjectionHint`)'
+                    auto-grow
+                    )
+                  v-textarea.is-monospaced.mt-2(
+                    v-model='config.injectBody'
+                    :label='$t(`admin:theme.bodyHtmlInjection`)'
+                    outlined
+                    color='primary'
+                    persistent-hint
+                    :hint='$t(`admin:theme.bodyHtmlInjectionHint`)'
+                    auto-grow
+                    )
 </template>
 
 <script>
@@ -244,5 +246,10 @@ export default {
 </script>
 
 <style lang='scss'>
-
+.v-textarea.is-monospaced textarea {
+  font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
 </style>

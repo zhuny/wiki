@@ -165,9 +165,33 @@ module.exports = {
     message: 'An unexpected error occured during search operation.',
     code: 4001
   }),
+  SystemGenericError: CustomError('SystemGenericError', {
+    message: 'An unexpected error occured.',
+    code: 7001
+  }),
+  SystemSSLDisabled: CustomError('SystemSSLDisabled', {
+    message: 'SSL is not enabled.',
+    code: 7002
+  }),
+  SystemSSLLEUnavailable: CustomError('SystemSSLLEUnavailable', {
+    message: 'Let\'s Encrypt is not initialized.',
+    code: 7004
+  }),
+  SystemSSLRenewInvalidProvider: CustomError('SystemSSLRenewInvalidProvider', {
+    message: 'Current provider does not support SSL certificate renewal.',
+    code: 7003
+  }),
   UserCreationFailed: CustomError('UserCreationFailed', {
     message: 'An unexpected error occured during user creation.',
     code: 1009
+  }),
+  UserDeleteForeignConstraint: CustomError('UserCreationFailed', {
+    message: 'Cannot delete user because of content relational constraints.',
+    code: 1017
+  }),
+  UserDeleteProtected: CustomError('UserDeleteProtected', {
+    message: 'Cannot delete a protected system account.',
+    code: 1018
   }),
   UserNotFound: CustomError('UserNotFound', {
     message: 'This user does not exist.',

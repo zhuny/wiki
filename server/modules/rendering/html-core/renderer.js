@@ -8,13 +8,19 @@ const URL = require('url').URL
 
 module.exports = {
   async render() {
-    const $ = cheerio.load(this.input)
+    const $ = cheerio.load(this.input, {
+      decodeEntities: false
+    })
 
     if ($.root().children().length < 1) {
       return ''
     }
 
-    for (let child of this.children) {
+    // --------------------------------
+    // STEP: PRE
+    // --------------------------------
+
+    for (let child of _.reject(this.children, ['step', 'post'])) {
       const renderer = require(`../${_.kebabCase(child.key)}/renderer.js`)
       renderer.init($, child.config)
     }
@@ -24,8 +30,8 @@ module.exports = {
     // --------------------------------
 
     let internalRefs = []
-    const reservedPrefixes = /^\/[a-z]\//gi
-    const exactReservedPaths = /^\/[a-z]$/gi
+    const reservedPrefixes = /^\/[a-z]\//i
+    const exactReservedPaths = /^\/[a-z]$/i
 
     const isHostSet = WIKI.config.host.length > 7 && WIKI.config.host !== 'http://'
     if (!isHostSet) {
@@ -35,8 +41,9 @@ module.exports = {
     $('a').each((i, elm) => {
       let href = $(elm).attr('href')
 
-      // -> Ignore empty / anchor links
-      if (!href || href.length < 1 || href.indexOf('#') === 0 || href.indexOf('mailto:') === 0) {
+      // -> Ignore empty / anchor links, e-mail addresses, and telephone numbers
+      if (!href || href.length < 1 || href.indexOf('#') === 0 ||
+        href.indexOf('mailto:') === 0 || href.indexOf('tel:') === 0) {
         return
       }
 
@@ -64,7 +71,11 @@ module.exports = {
           if (WIKI.config.lang.namespacing) {
             // -> Reformat paths
             if (href.indexOf('/') !== 0) {
-              href = (this.page.path === 'home') ? `/${this.page.localeCode}/${href}` : `/${this.page.localeCode}/${this.page.path}/${href}`
+              if (this.config.absoluteLinks) {
+                href = `/${this.page.localeCode}/${href}`
+              } else {
+                href = (this.page.path === 'home') ? `/${this.page.localeCode}/${href}` : `/${this.page.localeCode}/${this.page.path}/${href}`
+              }
             } else if (href.charAt(3) !== '/') {
               href = `/${this.page.localeCode}${href}`
             }
@@ -78,7 +89,11 @@ module.exports = {
           } else {
             // -> Reformat paths
             if (href.indexOf('/') !== 0) {
-              href = (this.page.path === 'home') ? `/${href}` : `/${this.page.path}/${href}`
+              if (this.config.absoluteLinks) {
+                href = `/${href}`
+              } else {
+                href = (this.page.path === 'home') ? `/${href}` : `/${this.page.path}/${href}`
+              }
             }
 
             try {
@@ -211,6 +226,17 @@ module.exports = {
       headers.push(headerSlug)
     })
 
-    return $.html('body').replace('<body>', '').replace('</body>', '')
+    let output = $.html('body').replace('<body>', '').replace('</body>', '')
+
+    // --------------------------------
+    // STEP: POST
+    // --------------------------------
+
+    for (let child of _.sortBy(_.filter(this.children, ['step', 'post']), ['order'])) {
+      const renderer = require(`../${_.kebabCase(child.key)}/renderer.js`)
+      output = await renderer.init(output, child.config)
+    }
+
+    return output
   }
 }

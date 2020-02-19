@@ -183,6 +183,8 @@ import _ from 'lodash'
 import { get, sync } from 'vuex-pathify'
 import markdownHelp from './markdown/help.vue'
 
+/* global siteConfig */
+
 // ========================================
 // IMPORTS
 // ========================================
@@ -241,7 +243,7 @@ const md = new MarkdownIt({
   linkify: true,
   typography: true,
   highlight(str, lang) {
-    return `<pre class="line-numbers"><code class="language-${lang}">${str}</code></pre>`
+    return `<pre class="line-numbers"><code class="language-${lang}">${_.escape(str)}</code></pre>`
   }
 })
   .use(mdAttrs, {
@@ -491,7 +493,8 @@ export default {
       },
       viewportMargin: 50,
       inputStyle: 'contenteditable',
-      allowDropFileTypes: ['image/jpg', 'image/png', 'image/svg', 'image/jpeg', 'image/gif']
+      allowDropFileTypes: ['image/jpg', 'image/png', 'image/svg', 'image/jpeg', 'image/gif'],
+      direction: siteConfig.rtl ? 'rtl' : 'ltr'
     })
     this.cm.setValue(this.$store.get('editor/content'))
     this.cm.on('change', c => {

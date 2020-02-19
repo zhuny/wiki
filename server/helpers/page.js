@@ -125,7 +125,7 @@ module.exports = {
     const result = localeFolderRegex.exec(meta.path)
     if (result[1]) {
       meta = {
-        locale: result[1],
+        locale: result[1].replace('/', ''),
         path: result[2]
       }
     }

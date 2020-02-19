@@ -1,5 +1,5 @@
 <template lang="pug">
-  v-app(v-scroll='upBtnScroll', :dark='darkMode')
+  v-app(v-scroll='upBtnScroll', :dark='darkMode', :class='$vuetify.rtl ? `is-rtl` : `is-ltr`')
     nav-header
     v-navigation-drawer(
       :class='darkMode ? `grey darken-4-d4` : `primary`'
@@ -49,7 +49,7 @@
         v-divider
       v-container.grey.pa-0(fluid, :class='darkMode ? `darken-4-l3` : `lighten-4`')
         v-row(no-gutters, align-content='center', style='height: 90px;')
-          v-col.pl-4.page-col-content(offset-xl='2', offset-lg='3', style='margin-top: auto; margin-bottom: auto;')
+          v-col.page-col-content.is-page-header(offset-xl='2', offset-lg='3', style='margin-top: auto; margin-bottom: auto;', :class='$vuetify.rtl ? `pr-4` : `pl-4`')
             .headline.grey--text(:class='darkMode ? `text--lighten-2` : `text--darken-3`') {{title}}
             .caption.grey--text.text--darken-1 {{description}}
       v-divider
@@ -122,10 +122,17 @@
                   template(v-slot:activator='{ on }')
                     v-btn(icon, tile, v-on='on'): v-icon(color='grey') mdi-bookmark
                   span {{$t('common:page.bookmark')}}
-                v-tooltip(bottom)
-                  template(v-slot:activator='{ on }')
-                    v-btn(icon, tile, v-on='on'): v-icon(color='grey') mdi-share-variant
-                  span {{$t('common:page.share')}}
+                v-menu(offset-y, bottom, min-width='300')
+                  template(v-slot:activator='{ on: menu }')
+                    v-tooltip(bottom)
+                      template(v-slot:activator='{ on: tooltip }')
+                        v-btn(icon, tile, v-on='{ ...menu, ...tooltip }'): v-icon(color='grey') mdi-share-variant
+                      span {{$t('common:page.share')}}
+                  social-sharing(
+                    :url='pageUrl'
+                    :title='title'
+                    :description='description'
+                  )
                 v-tooltip(bottom)
                   template(v-slot:activator='{ on }')
                     v-btn(icon, tile, v-on='on', @click='print'): v-icon(color='grey') mdi-printer
@@ -377,7 +384,8 @@ export default {
         })
         return result
       }, []))
-    }
+    },
+    pageUrl () { return window.location.href }
   },
   created() {
     this.$store.commit('page/SET_AUTHOR_ID', this.authorId)

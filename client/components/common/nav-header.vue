@@ -18,29 +18,31 @@
       )
     v-layout(row)
       v-flex(xs6, md4)
-        v-toolbar.nav-header-inner.pl-3(color='black', dark, flat)
-          v-menu(open-on-hover, offset-y, bottom, left, min-width='250', transition='slide-y-transition')
-            template(v-slot:activator='{ on }')
-              v-app-bar-nav-icon.btn-animate-app(v-on='on', :class='$vuetify.rtl ? `mx-0` : ``')
-                v-icon mdi-menu
-            v-list(nav, :light='!$vuetify.theme.dark', :dark='$vuetify.theme.dark', :class='$vuetify.theme.dark ? `grey darken-4` : ``')
-              v-list-item.pl-4(href='/')
-                v-list-item-avatar(size='24'): v-icon(color='blue') mdi-home
-                v-list-item-title.body-2 {{$t('common:header.home')}}
-              v-list-item.pl-4(@click='')
-                v-list-item-avatar(size='24'): v-icon(color='grey lighten-2') mdi-file-tree
-                v-list-item-content
-                  v-list-item-title.body-2.grey--text.text--ligten-2 {{$t('common:header.siteMap')}}
-                  v-list-item-subtitle.overline.grey--text.text--lighten-2 Coming soon
-              v-list-item.pl-4(href='/t')
-                v-list-item-avatar(size='24'): v-icon(color='teal') mdi-tag-multiple
-                v-list-item-title.body-2 {{$t('common:header.browseTags')}}
-              v-list-item.pl-4(@click='assets')
-                v-list-item-avatar(size='24'): v-icon(color='grey lighten-2') mdi-folder-multiple-image
-                v-list-item-content
-                  v-list-item-title.body-2.grey--text.text--ligten-2 {{$t('common:header.imagesFiles')}}
-                  v-list-item-subtitle.overline.grey--text.text--lighten-2 Coming soon
-          v-toolbar-title(:class='{ "mx-2": $vuetify.breakpoint.mdAndUp, "mx-0": $vuetify.breakpoint.smAndDown }')
+        v-toolbar.nav-header-inner(color='black', dark, flat, :class='$vuetify.rtl ? `pr-3` : `pl-3`')
+          v-avatar(tile, size='34', @click='goHome')
+            v-img.org-logo(:src='logoUrl')
+          //- v-menu(open-on-hover, offset-y, bottom, left, min-width='250', transition='slide-y-transition')
+          //-   template(v-slot:activator='{ on }')
+          //-     v-app-bar-nav-icon.btn-animate-app(v-on='on', :class='$vuetify.rtl ? `mx-0` : ``')
+          //-       v-icon mdi-menu
+          //-   v-list(nav, :light='!$vuetify.theme.dark', :dark='$vuetify.theme.dark', :class='$vuetify.theme.dark ? `grey darken-4` : ``')
+          //-     v-list-item.pl-4(href='/')
+          //-       v-list-item-avatar(size='24'): v-icon(color='blue') mdi-home
+          //-       v-list-item-title.body-2 {{$t('common:header.home')}}
+          //-     v-list-item.pl-4(@click='')
+          //-       v-list-item-avatar(size='24'): v-icon(color='grey lighten-2') mdi-file-tree
+          //-       v-list-item-content
+          //-         v-list-item-title.body-2.grey--text.text--ligten-2 {{$t('common:header.siteMap')}}
+          //-         v-list-item-subtitle.overline.grey--text.text--lighten-2 Coming soon
+          //-     v-list-item.pl-4(href='/t')
+          //-       v-list-item-avatar(size='24'): v-icon(color='teal') mdi-tag-multiple
+          //-       v-list-item-title.body-2 {{$t('common:header.browseTags')}}
+          //-     v-list-item.pl-4(@click='assets')
+          //-       v-list-item-avatar(size='24'): v-icon(color='grey lighten-2') mdi-folder-multiple-image
+          //-       v-list-item-content
+          //-         v-list-item-title.body-2.grey--text.text--ligten-2 {{$t('common:header.imagesFiles')}}
+          //-         v-list-item-subtitle.overline.grey--text.text--lighten-2 Coming soon
+          v-toolbar-title(:class='{ "mx-3": $vuetify.breakpoint.mdAndUp, "mx-0": $vuetify.breakpoint.smAndDown }')
             span.subheading {{title}}
       v-flex(md4, v-if='$vuetify.breakpoint.mdAndUp')
         v-toolbar.nav-header-inner(color='black', dark, flat)
@@ -91,7 +93,7 @@
           //- LANGUAGES
 
           template(v-if='mode === `view` && locales.length > 0')
-            v-menu(offset-y, bottom, transition='slide-y-transition')
+            v-menu(offset-y, bottom, transition='slide-y-transition', max-height='320px', min-width='210px', left)
               template(v-slot:activator='{ on: menu }')
                 v-tooltip(bottom)
                   template(v-slot:activator='{ on: tooltip }')
@@ -108,7 +110,7 @@
           //- PAGE ACTIONS
 
           template(v-if='isAuthenticated && path && mode !== `edit`')
-            v-menu(offset-y, bottom, transition='slide-y-transition')
+            v-menu(offset-y, bottom, transition='slide-y-transition', left)
               template(v-slot:activator='{ on: menu }')
                 v-tooltip(bottom)
                   template(v-slot:activator='{ on: tooltip }')
@@ -142,7 +144,7 @@
 
           //- NEW PAGE
 
-          template(v-if='isAuthenticated')
+          template(v-if='isAuthenticated && path && mode !== `edit`')
             v-tooltip(bottom)
               template(v-slot:activator='{ on }')
                 v-btn(icon, tile, height='64', v-on='on', @click='pageNew')
@@ -152,7 +154,7 @@
 
           //- ACCOUNT
 
-          v-menu(v-if='isAuthenticated', offset-y, bottom, min-width='300', transition='slide-y-transition')
+          v-menu(v-if='isAuthenticated', offset-y, bottom, min-width='300', transition='slide-y-transition', left)
             template(v-slot:activator='{ on: menu }')
               v-tooltip(bottom)
                 template(v-slot:activator='{ on: tooltip }')
@@ -197,6 +199,12 @@
     page-selector(mode='create', v-model='newPageModal', :open-handler='pageNewCreate', :locale='locale')
     page-selector(mode='move', v-model='movePageModal', :open-handler='pageMoveRename', :path='path', :locale='locale')
     page-delete(v-model='deletePageModal', v-if='path && path.length')
+
+    .nav-header-dev(v-if='isDevMode')
+      v-icon mdi-alert
+      div
+        .overline DEVELOPMENT VERSION
+        .overline This code base is NOT for production use!
 </template>
 
 <script>
@@ -206,7 +214,7 @@ import Cookies from 'js-cookie'
 
 import movePageMutation from 'gql/common/common-pages-mutation-move.gql'
 
-/* global siteLangs */
+/* global siteConfig, siteLangs */
 
 export default {
   components: {
@@ -230,7 +238,8 @@ export default {
       newPageModal: false,
       movePageModal: false,
       deletePageModal: false,
-      locales: siteLangs
+      locales: siteLangs,
+      isDevMode: false
     }
   },
   computed: {
@@ -241,6 +250,7 @@ export default {
     searchRestrictPath: sync('site/searchRestrictPath'),
     isLoading: get('isLoading'),
     title: get('site/title'),
+    logoUrl: get('site/logoUrl'),
     path: get('page/path'),
     locale: get('page/locale'),
     mode: get('page/mode'),
@@ -292,6 +302,7 @@ export default {
     this.$root.$on('pageDelete', () => {
       this.pageDelete()
     })
+    this.isDevMode = siteConfig.devMode === true
   },
   methods: {
     searchFocus () {
@@ -388,6 +399,9 @@ export default {
     logout () {
       Cookies.remove('jwt')
       window.location.assign('/')
+    },
+    goHome () {
+      window.location.assign('/')
     }
   }
 }
@@ -408,6 +422,10 @@ export default {
       padding: 0 14px 0 5px;
       padding-right: 14px;
     }
+  }
+
+  .org-logo {
+    cursor: pointer;
   }
 
   &-inner {
@@ -437,6 +455,24 @@ export default {
       &::before {
         border-radius: 4px;
       }
+    }
+  }
+
+  &-dev {
+    background-color: mc('red', '600');
+    position: absolute;
+    top: 11px;
+    left: 255px;
+    padding: 5px 15px;
+    border-radius: 5px;
+    display: flex;
+
+    .v-icon {
+      margin-right: 15px;
+    }
+
+    .overline:nth-child(2) {
+      text-transform: none;
     }
   }
 }

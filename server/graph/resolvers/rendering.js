@@ -19,14 +19,16 @@ module.exports = {
           ...rendererInfo,
           ...rdr,
           config: _.sortBy(_.transform(rdr.config, (res, value, key) => {
-            const configData = _.get(rendererInfo.props, key, {})
-            res.push({
-              key,
-              value: JSON.stringify({
-                ...configData,
-                value
+            const configData = _.get(rendererInfo.props, key, false)
+            if (configData) {
+              res.push({
+                key,
+                value: JSON.stringify({
+                  ...configData,
+                  value
+                })
               })
-            })
+            }
           }, []), 'key')
         }
       })
@@ -39,10 +41,10 @@ module.exports = {
     async updateRenderers(obj, args, context) {
       try {
         for (let rdr of args.renderers) {
-          await WIKI.models.storage.query().patch({
+          await WIKI.models.renderers.query().patch({
             isEnabled: rdr.isEnabled,
             config: _.reduce(rdr.config, (result, value, key) => {
-              _.set(result, `${value.key}`, value.value)
+              _.set(result, `${value.key}`, _.get(JSON.parse(value.value), 'v', null))
               return result
             }, {})
           }).where('key', rdr.key)

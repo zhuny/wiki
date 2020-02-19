@@ -23,23 +23,34 @@
           v-spacer
           i18next.caption.grey--text.animated.fadeInRight.wait-p5s(path='admin:users.id', tag='div')
             strong(place='id') {{user.id}}
-          v-divider.animated.fadeInRight.wait-p3s.ml-3(vertical)
-          v-btn.ml-3.animated.fadeInDown.wait-p2s(color='grey', large, outlined, to='/users')
+          v-divider.animated.fadeInRight.wait-p4s.ml-3(vertical)
+          v-btn.ml-3.animated.fadeInDown.wait-p3s(color='grey', large, outlined, to='/users')
             v-icon mdi-arrow-left
-          v-dialog(v-model='deleteUserDialog', max-width='500', v-if='user.id !== currentUserId && !user.isSystem')
+          v-menu(offset-y, origin='top right')
             template(v-slot:activator='{ on }')
-              v-btn.ml-3.animated.fadeInDown.wait-p1s(color='red', large, outlined, v-on='on', disabled)
-                v-icon(color='red') mdi-trash-can-outline
-            v-card
-              .dialog-header.is-red Delete User?
-              v-card-text Are you sure you want to delete user #[strong {{ user.name }}]?
-              v-card-actions
-                v-spacer
-                v-btn(text, @click='deleteUserDialog = false') Cancel
-                v-btn(color='red', dark, @click='deleteUser') Delete
+              v-btn.ml-3.animated.fadeInDown.wait-p2s(color='indigo', v-on='on', large, depressed, dark)
+                span Actions
+                v-icon(right) mdi-chevron-down
+            v-list(dense, nav)
+              v-list-item(v-if='!user.isActive', @click='activateUser')
+                v-list-item-icon
+                  v-icon(color='purple') mdi-account-key
+                v-list-item-title Activate
+              v-list-item(v-else, @click='deactivateUser', :disabled='user.id == currentUserId || user.isSystem')
+                v-list-item-icon
+                  v-icon(color='purple') mdi-account-cancel
+                v-list-item-title Deactivate
+              v-list-item(@click='verifyUser', :disabled='user.isVerified')
+                v-list-item-icon
+                  v-icon(color='blue') mdi-account-check
+                v-list-item-title Set as Verified
+              v-list-item(@click='deleteUserDialog = true', :disabled='user.id == currentUserId || user.isSystem')
+                v-list-item-icon
+                  v-icon(color='red') mdi-trash-can-outline
+                v-list-item-title Delete
           v-btn.ml-3.animated.fadeInDown(color='primary', large, depressed, @click='updateUser')
             v-icon(left) mdi-check
-            span Update User
+            span {{$t('admin:users.updateUser')}}
       v-flex(xs6)
         v-card.animated.fadeInUp
           v-toolbar(color='primary', dense, dark, flat)
@@ -208,7 +219,6 @@
               item-disabled='isSystem'
               solo
               flat
-              dense
               hide-details
               @keydown.esc='editPop.assignGroup = false'
               style='max-width: 300px;'
@@ -216,6 +226,10 @@
             v-btn.ml-2.px-4(depressed, color='primary', height='48', @click='assignGroup', :disabled='newGroup === 0')
               v-icon(left) mdi-clipboard-account-outline
               span {{$t('admin:users.groupAssign')}}
+          v-system-bar(window, :color='$vuetify.theme.dark ? `grey darken-4-l3` : `grey lighten-3`')
+            v-spacer
+            .caption {{$t('admin:users.groupAssignNotice')}}
+
       v-flex(xs6)
         v-card.animated.fadeInUp.wait-p2s
           v-toolbar(color='primary', dense, dark, flat)
@@ -317,16 +331,28 @@
           v-card-text
             em.caption.grey--text Coming soon
 
+    v-dialog(v-model='deleteUserDialog', max-width='500')
+      v-card
+        .dialog-header.is-red {{$t('admin:users.deleteConfirmTitle')}}
+        v-card-text.pt-5
+          i18next(path='admin:users.deleteConfirmText', tag='span')
+            strong(place='username') {{ user.email }}
+          .caption.mt-3 {{$t('admin:users.deleteConfirmForeignNotice')}}
+        v-card-actions
+          v-spacer
+          v-btn(text, @click='deleteUserDialog = false') {{$t('common:actions.cancel')}}
+          v-btn(color='red', dark, @click='deleteUser') {{$t('common:actions.delete')}}
+
 </template>
 <script>
 import _ from 'lodash'
 import { get } from 'vuex-pathify'
+import gql from 'graphql-tag'
 
 import { StatusIndicator } from 'vue-status-indicator'
 
 import userQuery from 'gql/admin/users/users-query-single.gql'
 import groupsQuery from 'gql/admin/users/users-query-groups.gql'
-import updateUserMutation from 'gql/admin/users/users-mutation-update.gql'
 
 export default {
   components: {
@@ -615,11 +641,147 @@ export default {
     currentUserId: get('user/id')
   },
   methods: {
-    deleteUser() {},
+    /**
+     * Activate a user (if previously deactivated)
+     */
+    async activateUser () {
+      this.$store.commit(`loadingStart`, 'admin-users-activate')
+      const resp = await this.$apollo.mutate({
+        mutation: gql`
+          mutation ($id: Int!) {
+            users {
+              activate(id: $id) {
+                responseResult {
+                  succeeded
+                  errorCode
+                  slug
+                  message
+                }
+              }
+            }
+          }
+        `,
+        variables: {
+          id: this.user.id
+        }
+      })
+      if (_.get(resp, 'data.users.activate.responseResult.succeeded', false)) {
+        this.$store.commit('showNotification', {
+          style: 'success',
+          message: this.$t('admin:users.userActivateSuccess'),
+          icon: 'check'
+        })
+        this.user.isActive = true
+      } else {
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: _.get(resp, 'data.users.activate.responseResult.message', 'An unexpected error occured.'),
+          icon: 'warning'
+        })
+      }
+      this.$store.commit(`loadingStop`, 'admin-users-activate')
+    },
+    /**
+     * Deactivate a currently active user
+     */
+    async deactivateUser () {
+      this.$store.commit(`loadingStart`, 'admin-users-deactivate')
+      const resp = await this.$apollo.mutate({
+        mutation: gql`
+          mutation ($id: Int!) {
+            users {
+              deactivate(id: $id) {
+                responseResult {
+                  succeeded
+                  errorCode
+                  slug
+                  message
+                }
+              }
+            }
+          }
+        `,
+        variables: {
+          id: this.user.id
+        }
+      })
+      if (_.get(resp, 'data.users.deactivate.responseResult.succeeded', false)) {
+        this.$store.commit('showNotification', {
+          style: 'success',
+          message: this.$t('admin:users.userDeactivateSuccess'),
+          icon: 'check'
+        })
+        this.user.isActive = false
+      } else {
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: _.get(resp, 'data.users.deactivate.responseResult.message', 'An unexpected error occured.'),
+          icon: 'warning'
+        })
+      }
+      this.$store.commit(`loadingStop`, 'admin-users-deactivate')
+    },
+    /**
+     * Delete a user
+     */
+    async deleteUser () {
+      this.$store.commit(`loadingStart`, 'admin-users-delete')
+      const resp = await this.$apollo.mutate({
+        mutation: gql`
+          mutation ($id: Int!) {
+            users {
+              delete(id: $id) {
+                responseResult {
+                  succeeded
+                  errorCode
+                  slug
+                  message
+                }
+              }
+            }
+          }
+        `,
+        variables: {
+          id: this.user.id
+        }
+      })
+      if (_.get(resp, 'data.users.delete.responseResult.succeeded', false)) {
+        this.$store.commit('showNotification', {
+          style: 'success',
+          message: this.$t('admin:users.userDeleteSuccess'),
+          icon: 'check'
+        })
+        this.$router.push('/users')
+      } else {
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: _.get(resp, 'data.users.delete.responseResult.message', 'An unexpected error occured.'),
+          icon: 'warning'
+        })
+      }
+      this.deleteUserDialog = false
+      this.$store.commit(`loadingStop`, 'admin-users-delete')
+    },
+    /**
+     * Update a user
+     */
     async updateUser() {
       this.$store.commit(`loadingStart`, 'admin-users-update')
       const resp = await this.$apollo.mutate({
-        mutation: updateUserMutation,
+        mutation: gql`
+          mutation ($id: Int!, $email: String, $name: String, $newPassword: String, $groups: [Int], $location: String, $jobTitle: String, $timezone: String) {
+            users {
+              update(id: $id, email: $email, name: $name, newPassword: $newPassword, groups: $groups, location: $location, jobTitle: $jobTitle, timezone: $timezone) {
+                responseResult {
+                  succeeded
+                  errorCode
+                  slug
+                  message
+                }
+              }
+            }
+          }
+        `,
         variables: {
           id: this.user.id,
           email: this.user.email,
@@ -631,6 +793,7 @@ export default {
           timezone: this.user.timezone
         }
       })
+      this.newPassword = ''
       if (_.get(resp, 'data.users.update.responseResult.succeeded', false)) {
         this.$store.commit('showNotification', {
           style: 'success',
@@ -647,6 +810,9 @@ export default {
       }
       this.$store.commit(`loadingStop`, 'admin-users-update')
     },
+    /**
+     * Focus an input after delay
+     */
     focusField (ipt) {
       this.$nextTick(() => {
         _.delay(() => {
@@ -654,6 +820,9 @@ export default {
         }, 200)
       })
     },
+    /**
+     * Assign group to user
+     */
     assignGroup() {
       if (_.some(this.user.groups, ['id', this.newGroup])) {
         this.$store.commit('showNotification', {
@@ -666,8 +835,51 @@ export default {
         this.newGroup = 0
       }
     },
+    /**
+     * Unassign group from user
+     */
     unassignGroup(gid) {
       this.user.groups = _.reject(this.user.groups, ['id', gid])
+    },
+    /**
+     * Manually set user as verified
+     */
+    async verifyUser () {
+      this.$store.commit(`loadingStart`, 'admin-users-verify')
+      const resp = await this.$apollo.mutate({
+        mutation: gql`
+          mutation ($id: Int!) {
+            users {
+              verify(id: $id) {
+                responseResult {
+                  succeeded
+                  errorCode
+                  slug
+                  message
+                }
+              }
+            }
+          }
+        `,
+        variables: {
+          id: this.user.id
+        }
+      })
+      if (_.get(resp, 'data.users.verify.responseResult.succeeded', false)) {
+        this.$store.commit('showNotification', {
+          style: 'success',
+          message: this.$t('admin:users.userVerifySuccess'),
+          icon: 'check'
+        })
+        this.user.isVerified = true
+      } else {
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: _.get(resp, 'data.users.verify.responseResult.message', 'An unexpected error occured.'),
+          icon: 'warning'
+        })
+      }
+      this.$store.commit(`loadingStop`, 'admin-users-verify')
     }
   },
   apollo: {

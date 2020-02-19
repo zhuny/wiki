@@ -16,6 +16,8 @@ defaults:
       db: wiki
       ssl: false
       storage: ./db.sqlite
+      sslOptions:
+        auto: true
     ssl:
       enabled: false
     pool:
@@ -38,6 +40,7 @@ defaults:
       clientId: ''
       isEnabled: false
     title: Wiki.js
+    logoUrl: https://static.requarks.io/logo/wikijs-butterfly.svg
     theming:
       theme: 'default'
       iconset: 'md'
@@ -51,6 +54,8 @@ defaults:
       securityHSTSDuration: 300
       securityCSP: false
       securityCSPDirectives: ''
+    server:
+      sslRedir: false
     flags:
       ldapdebug: false
       sqllog: false
@@ -65,6 +70,7 @@ defaults:
       origin: true
     search:
       maxHits: 100
+    maintainerEmail: security@requarks.io
 localeNamespaces:
   - admin
   - auth

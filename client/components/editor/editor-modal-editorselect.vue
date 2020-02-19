@@ -1,6 +1,6 @@
 <template lang='pug'>
   v-dialog(v-model='isShown', persistent, max-width='700', no-click-animation)
-    v-btn(fab, fixed, bottom, right, color='grey darken-3', dark, @click='goBack'): v-icon mdi-undo-variant
+    v-btn(fab, fixed, bottom, right, color='grey darken-3', dark, @click='goBack', style='width: 50px;'): v-icon mdi-undo-variant
     v-card.radius-7(color='blue darken-3', dark)
       v-card-text.text-center.py-4
         .subtitle-1.white--text {{$t('editor:select.title')}}
@@ -16,7 +16,7 @@
                     )
                     v-card-text.text-center(@click='')
                       img(src='/svg/editor-icon-api.svg', alt='API', style='width: 36px; opacity: .5;')
-                      .body-2.mt-2.blue--text.text--lighten-2 API Docs
+                      .body-2.blue--text.mt-2.text--lighten-2 API Docs
                       .caption.blue--text.text--lighten-1 REST / GraphQL
                     v-fade-transition
                       v-overlay(

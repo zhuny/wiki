@@ -50,6 +50,7 @@ props:
     title: B - SSH Private Key Contents
     hint: SSH Authentication Only - Paste the contents of the private key. The key must NOT be passphrase-protected. Mode must be set to contents to use this option.
     multiline: true
+    sensitive: true
     order: 13
   verifySSL:
     type: Boolean
@@ -66,6 +67,7 @@ props:
     type: String
     title: Password / PAT
     hint: Basic Authentication Only
+    sensitive: true
     order: 21
   defaultEmail:
     type: String
@@ -91,6 +93,12 @@ props:
     default: ''
     hint: Optional - Absolute path to the Git binary, when not available in PATH. Leave empty to use the default PATH location (recommended).
     order: 50
+  sshPort:
+    type: Number
+    title: SSH Port
+    default: 22
+    hint: Optional - SSH Authentication Only - Allows overriding ssh default port.
+    order: 60
 actions:
   - handler: syncUntracked
     label: Add Untracked Changes
@@ -101,3 +109,6 @@ actions:
   - handler: importAll
     label: Import Everything
     hint: Will import all content currently in the local Git repository, regardless of the latest commit state. Useful for importing content from the remote repository created before git was enabled.
+  - handler: purge
+    label: Purge Local Repository
+    hint: If you have unrelated merge histories, clearing the local repository can resolve this issue. This will not affect the remote repository or perform any commit.

@@ -204,7 +204,10 @@ module.exports = class User extends Model {
     }
 
     // Parse picture URL
-    let pictureUrl = _.get(profile, 'picture', _.get(user, 'pictureUrl', null))
+    let pictureUrl = _.truncate(_.get(profile, 'picture', _.get(user, 'pictureUrl', null)), {
+      length: 255,
+      omission: ''
+    })
 
     // Update existing user
     if (user) {
@@ -328,7 +331,7 @@ module.exports = class User extends Model {
 
   static async refreshToken(user) {
     if (_.isSafeInteger(user)) {
-      user = await WIKI.models.users.query().findById(user).eager('groups').modifyEager('groups', builder => {
+      user = await WIKI.models.users.query().findById(user).withGraphFetched('groups').modifyGraph('groups', builder => {
         builder.select('groups.id', 'permissions')
       })
       if (!user) {
@@ -336,7 +339,7 @@ module.exports = class User extends Model {
         throw new WIKI.Error.AuthGenericError()
       }
     } else if (_.isNil(user.groups)) {
-      await user.$relatedQuery('groups').select('groups.id', 'permissions')
+      user.groups = await user.$relatedQuery('groups').select('groups.id', 'permissions')
     }
 
     return {
@@ -702,7 +705,7 @@ module.exports = class User extends Model {
   }
 
   static async getGuestUser () {
-    const user = await WIKI.models.users.query().findById(2).eager('groups').modifyEager('groups', builder => {
+    const user = await WIKI.models.users.query().findById(2).withGraphJoined('groups').modifyGraph('groups', builder => {
       builder.select('groups.id', 'permissions')
     })
     if (!user) {
