@@ -1,0 +1,6 @@
+.github
+.vscode
+.webpack-cache
+node_modules
+dev
+client
