@@ -199,8 +199,8 @@ export default {
   }
 }
 
-.dashboard-icon {
-  position: absolute;
+.v-icon.dashboard-icon {
+  position: absolute !important;
   right: 0;
   top: 12px;
   font-size: 100px !important;
