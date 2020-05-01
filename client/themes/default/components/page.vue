@@ -2,6 +2,7 @@
   v-app(v-scroll='upBtnScroll', :dark='darkMode', :class='$vuetify.rtl ? `is-rtl` : `is-ltr`')
     nav-header
     v-navigation-drawer(
+      v-if='navMode !== `NONE`'
       :class='darkMode ? `grey darken-4-d4` : `primary`'
       dark
       app
@@ -12,9 +13,9 @@
       :right='$vuetify.rtl'
       )
       vue-scroll(:ops='scrollStyle')
-        nav-sidebar(:color='darkMode ? `grey darken-4-d4` : `primary`', :items='sidebar')
+        nav-sidebar(:color='darkMode ? `grey darken-4-d4` : `primary`', :items='sidebar', :nav-mode='navMode')
 
-    v-fab-transition
+    v-fab-transition(v-if='navMode !== `NONE`')
       v-btn(
         fab
         color='primary'
@@ -173,7 +174,7 @@
                         @click='pageHistory'
                         )
                         v-icon(size='20') mdi-history
-                    span History
+                    span {{$t('common:header.history')}}
                   v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl')
                     template(v-slot:activator='{ on }')
                       v-btn(
@@ -185,7 +186,19 @@
                         @click='pageSource'
                         )
                         v-icon(size='20') mdi-code-tags
-                    span View Source
+                    span {{$t('common:header.viewSource')}}
+                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl')
+                    template(v-slot:activator='{ on }')
+                      v-btn(
+                        fab
+                        small
+                        color='white'
+                        light
+                        v-on='on'
+                        @click='pageDuplicate'
+                        )
+                        v-icon(size='20') mdi-content-duplicate
+                    span {{$t('common:header.duplicate')}}
                   v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl')
                     template(v-slot:activator='{ on }')
                       v-btn(
@@ -197,7 +210,7 @@
                         @click='pageMove'
                         )
                         v-icon(size='20') mdi-content-save-move-outline
-                    span Move / Rename
+                    span {{$t('common:header.move')}}
                   v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl')
                     template(v-slot:activator='{ on }')
                       v-btn(
@@ -209,7 +222,7 @@
                         @click='pageDelete'
                         )
                         v-icon(size='20') mdi-trash-can-outline
-                    span Delete
+                    span {{$t('common:header.delete')}}
               span {{$t('common:page.editPage')}}
             .contents(ref='container')
               slot(name='contents')
@@ -237,6 +250,7 @@
 <script>
 import { StatusIndicator } from 'vue-status-indicator'
 import Prism from 'prismjs'
+import mermaid from 'mermaid'
 import { get } from 'vuex-pathify'
 import _ from 'lodash'
 import ClipboardJS from 'clipboard'
@@ -332,6 +346,10 @@ export default {
     sidebar: {
       type: Array,
       default: () => []
+    },
+    navMode: {
+      type: String,
+      default: 'MIXED'
     }
   },
   data() {
@@ -396,21 +414,25 @@ export default {
     }
   },
   created() {
-    this.$store.commit('page/SET_AUTHOR_ID', this.authorId)
-    this.$store.commit('page/SET_AUTHOR_NAME', this.authorName)
-    this.$store.commit('page/SET_CREATED_AT', this.createdAt)
-    this.$store.commit('page/SET_DESCRIPTION', this.description)
-    this.$store.commit('page/SET_IS_PUBLISHED', this.isPublished)
-    this.$store.commit('page/SET_ID', this.pageId)
-    this.$store.commit('page/SET_LOCALE', this.locale)
-    this.$store.commit('page/SET_PATH', this.path)
-    this.$store.commit('page/SET_TAGS', this.tags)
-    this.$store.commit('page/SET_TITLE', this.title)
-    this.$store.commit('page/SET_UPDATED_AT', this.updatedAt)
+    this.$store.set('page/authorId', this.authorId)
+    this.$store.set('page/authorName', this.authorName)
+    this.$store.set('page/createdAt', this.createdAt)
+    this.$store.set('page/description', this.description)
+    this.$store.set('page/isPublished', this.isPublished)
+    this.$store.set('page/id', this.pageId)
+    this.$store.set('page/locale', this.locale)
+    this.$store.set('page/path', this.path)
+    this.$store.set('page/tags', this.tags)
+    this.$store.set('page/title', this.title)
+    this.$store.set('page/updatedAt', this.updatedAt)
 
-    this.$store.commit('page/SET_MODE', 'view')
+    this.$store.set('page/mode', 'view')
   },
   mounted () {
+    if (this.$vuetify.theme.dark) {
+      this.scrollStyle.bar.background = '#424242'
+    }
+
     // -> Check side navigation visibility
     this.handleSideNavVisibility()
     window.addEventListener('resize', _.debounce(() => {
@@ -419,6 +441,12 @@ export default {
 
     // -> Highlight Code Blocks
     Prism.highlightAllUnder(this.$refs.container)
+
+    // -> Render Mermaid diagrams
+    mermaid.mermaidAPI.initialize({
+      startOnLoad: true,
+      theme: this.$vuetify.theme.dark ? `dark` : `default`
+    })
 
     // -> Handle anchor scrolling
     this.$nextTick(() => {
@@ -457,6 +485,9 @@ export default {
     },
     pageSource () {
       this.$root.$emit('pageSource')
+    },
+    pageDuplicate () {
+      this.$root.$emit('pageDuplicate')
     },
     pageMove () {
       this.$root.$emit('pageMove')

@@ -27,6 +27,10 @@ type UserQuery {
   single(
     id: Int!
   ): User @auth(requires: ["manage:users", "manage:system"])
+
+  profile: UserProfile
+
+  lastLogins: [UserLastLogin] @auth(requires: ["write:groups", "manage:groups", "write:users", "manage:users", "manage:system"])
 }
 
 # -----------------------------------------------
@@ -74,6 +78,18 @@ type UserMutation {
   resetPassword(
     id: Int!
   ): DefaultResponse
+
+  updateProfile(
+    name: String!
+    location: String!
+    jobTitle: String!
+    timezone: String!
+  ): UserTokenResponse
+
+  changePassword(
+    current: String!
+    new: String!
+  ): UserTokenResponse
 }
 
 # -----------------------------------------------
@@ -83,6 +99,12 @@ type UserMutation {
 type UserResponse {
   responseResult: ResponseStatus!
   user: User
+}
+
+type UserLastLogin {
+  id: Int!
+  name: String!
+  lastLoginAt: Date!
 }
 
 type UserMinimal {
@@ -108,5 +130,29 @@ type User {
   timezone: String!
   createdAt: Date!
   updatedAt: Date!
+  lastLoginAt: Date
   groups: [Group]!
+}
+
+type UserProfile {
+  id: Int!
+  name: String!
+  email: String!
+  providerKey: String
+  providerName: String
+  isSystem: Boolean!
+  isVerified: Boolean!
+  location: String!
+  jobTitle: String!
+  timezone: String!
+  createdAt: Date!
+  updatedAt: Date!
+  lastLoginAt: Date
+  groups: [String]!
+  pagesTotal: Int!
+}
+
+type UserTokenResponse {
+  responseResult: ResponseStatus!
+  jwt: String
 }
