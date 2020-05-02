@@ -56,12 +56,27 @@ module.exports = {
       } else {
         await this.preBootMaster()
         await require('../master')()
-        this.postBootMaster()
+        await this.postBootMaster()
+        await this.startHTTP()
       }
     } catch (err) {
       WIKI.logger.error(err)
       process.exit(1)
     }
+  },
+  /**
+   * Wait until ready and start http server
+   */
+  async startHTTP() {
+    // ----------------------------------------
+    // Start HTTP Server(s)
+    // ----------------------------------------
+    await WIKI.servers.startHTTP()
+
+    if (WIKI.config.ssl.enabled === true || WIKI.config.ssl.enabled === 'true' || WIKI.config.ssl.enabled === 1 || WIKI.config.ssl.enabled === '1') {
+      await WIKI.servers.startHTTPS()
+    }
+    WIKI.logger.info("Start Server")
   },
   /**
    * Post-Master Boot Sequence
